@@ -1,0 +1,15 @@
+name: fed-pbt
+channels:
+  - pytorch
+  - anaconda
+  - defaults
+dependencies:
+  - pip=19.0
+  - pytorch=1.0
+  - cython=0.29.0
+  - numpy=1.15.1
+  - pip:
+    - torch==1.0
+    - ray==0.7.1
+      #- "--editable=git+https://github.com/ray-project/ray.git#egg=ray&#subdirectory=python"
+    - easydict==1.9

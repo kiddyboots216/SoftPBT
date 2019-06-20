@@ -467,8 +467,8 @@ args = EasyDict({
     # 'lrs': [5e-5, 5e-4, 5e-3],
     # 'episodes': 150,
 #     'num_iters': 100,
-    'env': "BreakoutNoFrameskip-v4",
-    #'env': 'HalfCheetah-v2',
+    #'env': "BreakoutNoFrameskip-v4",
+    'env': 'HalfCheetah-v2',
     'name': 'fed_experiment',
     'algo': 'PPO',
     # 'hyperparams': {
