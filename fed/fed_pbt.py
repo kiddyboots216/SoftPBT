@@ -11,7 +11,7 @@ from ray import tune
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
 from ray.rllib.env.atari_wrappers import is_atari, wrap_deepmind
 
-from fed_pbt_utils import gen_policy_graphs, make_fed_env, fed_train, fed_pbt_train
+from utils import gen_policy_graphs, make_fed_env, fed_train, fed_pbt_train
 
 def fed_pbt_wrapper(args):
     ray.init(ignore_reinit_error=True)
