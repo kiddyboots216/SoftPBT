@@ -62,6 +62,9 @@ if __name__ == "__main__":
                 "sgd_minibatch_size": 32768,
                 "train_batch_size": 320000,
                 # "grad_clip": 0.5,
+                "model": {
+                    "free_log_std": True,
+                }
                 "batch_mode": "complete_episodes",
                 "observation_filter": "MeanStdFilter",
                 "env": "Humanoid-v2",
