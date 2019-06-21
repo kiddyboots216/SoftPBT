@@ -2,7 +2,7 @@ import gym
 import math
 import random
 import numpy as np
-from easydict import EasyDict
+#from easydict import EasyDict
 import argparse
 
 import ray
@@ -80,6 +80,7 @@ parser.add_argument("--num_agents", type=int, default=1)
 parser.add_argument("--interval", type=int, default=4)
 parser.add_argument("--temp", type=float, default=1.5)
 parser.add_argument("--quantile", type=float, default=0.25)
+parser.add_argument("--resample_probability", type=float, default=0.25)
 parser.add_argument("--algo", type=str, default='PPO')
 parser.add_argument("--lr", type=list, 
     default=[1e-2, 5e-3, 1e-3, 5e-4, 1e-4, 5e-5, 1e-5, 5e-6])

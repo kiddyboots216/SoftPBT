@@ -2,7 +2,7 @@ import gym
 import math
 import random
 import numpy as np
-from easydict import EasyDict
+#from easydict import EasyDict
 
 import ray
 from ray.tune.registry import register_env
@@ -72,25 +72,25 @@ def change_weights(weights, i):
     # print(dct.keys())
     return dct
 
-def synchronize(agent, weights, num_agents):
+def synchronize(agent, weights, args):
     """
     Helper function to synchronize weights of the multiagent
     """
     weights_to_set = {f'agent_{i}': weights 
-         for i in range(num_agents)}
+         for i in range(args.num_agents)}
     # weights_to_set = {f'agent_{i}': change_weights(weights, i) 
     #    for i in range(num_agents)}
     agent.set_weights(weights_to_set)
 
-def uniform_initialize(agent, num_agents):
+def uniform_initialize(agent, args):
     """
     Helper function for uniform initialization
     """
     new_weights = agent.get_weights(["agent_0"]).get("agent_0")
     # print(new_weights.keys())
-    synchronize(agent, new_weights, num_agents)
+    synchronize(agent, new_weights, args)
 
-def compute_softmax_weighted_avg(weights, alphas, num_agents, temperature=1):
+def compute_softmax_weighted_avg(weights, alphas, args):
     """
     Helper function to compute weighted avg of weights weighted by alphas
     Weights and alphas must have same keys. Uses softmax.
@@ -100,7 +100,7 @@ def compute_softmax_weighted_avg(weights, alphas, num_agents, temperature=1):
     returns:
         new_weights - array
     """
-    def softmax(x, beta=temperature, length=num_agents):
+    def softmax(x, beta=args.temp, length=args.num_agents):
         """Compute softmax values for each sets of scores in x."""
         e_x = np.exp(beta * (x - np.max(x)))
         return (e_x / e_x.sum()).reshape(length, 1)
@@ -111,14 +111,14 @@ def compute_softmax_weighted_avg(weights, alphas, num_agents, temperature=1):
     new_weights = sum(np.multiply(weight_vals, soft))
     return new_weights
 
-def compute_reward_weighted_avg(weights, alphas, num_agents):
+def compute_reward_weighted_avg(weights, alphas, args):
     alpha_vals = np.array(list(alphas.values()))
     weight_vals = np.array(list(weights.values()))
-    soft = (alpha_vals/alpha_vals.sum()).reshape(num_agents, 1)
+    soft = (alpha_vals/alpha_vals.sum()).reshape(args.num_agents, 1)
     new_weights = sum(np.multiply(weight_vals, soft))
     return new_weights
 
-def reward_weighted_update(agent, result, num_agents):
+def reward_weighted_update(agent, result, args): 
     """
     Helper function to synchronize weights of multiagent via
     reward-weighted avg of weights
@@ -126,11 +126,10 @@ def reward_weighted_update(agent, result, num_agents):
     all_weights = agent.get_weights()
     policy_reward_mean = result['policy_reward_mean']
     if policy_reward_mean:
-        new_weights = compute_reward_weighted_avg(all_weights, policy_reward_mean, num_agents)
-        synchronize(agent, new_weights, num_agents)
+        new_weights = compute_reward_weighted_avg(all_weights, policy_reward_mean, args) 
+        synchronize(agent, new_weights, args) 
 
-def softmax_reward_weighted_update(agent, result, num_agents, temperature=1, 
-        resample_probability=0.25, explore_dict={"lr": [1e-3, 5e-5, 1e-4, 5e-4]}):
+def softmax_reward_weighted_update(agent, result, args):
     """
     Helper function to synchronize weights of multiagent via
     softmax reward-weighted avg of weights with specific temperature
@@ -138,44 +137,46 @@ def softmax_reward_weighted_update(agent, result, num_agents, temperature=1,
     all_weights = agent.get_weights()
     policy_reward_mean = result['policy_reward_mean']
     if policy_reward_mean:
-        new_weights = compute_softmax_weighted_avg(all_weights, policy_reward_mean, num_agents, temperature=temperature)
-        synchronize(agent, new_weights, num_agents)
-        explore(agent, policy_reward_mean, explore_dict, num_agents, resample_probability)
+        new_weights = compute_softmax_weighted_avg(all_weights, policy_reward_mean, args)
+        synchronize(agent, new_weights, args)
+        explore(agent, policy_reward_mean, args)
 
-def population_based_train(agent, result, num_agents):
+def population_based_train(agent, result, args):
     """
     Helper function to implement population based training
     """
     all_weights = agent.get_weights()
-    agents = [f'agent_{id}' for id in range(num_agents)]
+    agents = [f'agent_{id}' for id in range(args.num_agents)]
     policy_reward_mean = result['policy_reward_mean']
     if policy_reward_mean:
         # import pdb; pdb.set_trace()
         sorted_rewards = sorted(policy_reward_mean.items(), key=lambda kv: kv[1])
-        upper_quantile = [kv[0] for kv in sorted_rewards[int(math.floor(args.quantile * -num_agents)):]]
-        lower_quantile = [kv[0] for kv in sorted_rewards[:int(math.ceil(args.quantile * num_agents))]]
+        upper_quantile = [kv[0] for kv in sorted_rewards[int(math.floor(args.quantile * -args.num_agents)):]]
+        lower_quantile = [kv[0] for kv in sorted_rewards[:int(math.ceil(args.quantile * args.num_agents))]]
         new_weights = {agent_id: all_weights[agent_id] if agent_id not in lower_quantile else all_weights[random.choice(upper_quantile)] 
          for agent_id in agents}
         agent.set_weights(new_weights)
         # explore(agent, lower_quantile)
 
-def explore(agent, policy_reward_mean, explore_dict, num_agents, resample_probability):
+def explore(agent, policy_reward_mean, args):
     """
     Helper function to explore hyperparams (currently just lr)
     """
     from ray.rllib.utils.schedules import ConstantSchedule
     sorted_rewards = sorted(policy_reward_mean.items(), key=lambda kv: kv[1])
-    upper_quantile = [kv[0] for kv in sorted_rewards[int(math.floor(args.quantile * -num_agents)):]]
-    lower_quantile = [kv[0] for kv in sorted_rewards[:int(math.ceil(args.quantile * num_agents))]]
+    upper_quantile = [kv[0] for kv in sorted_rewards[int(math.floor(args.quantile * -args.num_agents)):]]
+    lower_quantile = [kv[0] for kv in sorted_rewards[:int(math.ceil(args.quantile * args.num_agents))]]
     #print(lower_quantile)
     for agent_id in lower_quantile:
         policy_graph = agent.get_policy(agent_id)
         # old_lr = policy_graph._sess.run(policy_graph.cur_lr)
         new_policy_graph = agent.get_policy(random.choice(upper_quantile))
-        if "lr" in explore_dict:
+        if True:
+            # workaround because can't put dict into argparser
+        #if "lr" in args.explore_dict:
             exemplar_lr = new_policy_graph.cur_lr
-            distribution = explore_dict["lr"]
-            if random.random() < resample_probability or \
+            distribution = args.lr
+            if random.random() < args.resample_probability or \
                     exemplar_lr not in distribution:
                 new_val = random.choice(distribution)
                 # policy_graph.cur_lr.load(
@@ -208,24 +209,22 @@ def explore(agent, policy_reward_mean, explore_dict, num_agents, resample_probab
         #         policy_graph.cur_lr = new_policy_graph.cur_lr * 0.8
 
 def fed_pbt_train(args):
-    num_agents = args.num_agents
-    temperature = args.temp
-    num_iters = args.interval
     def fed_learn(metrics):
         result = metrics["result"]
         trainer = metrics["trainer"]
         info = result["info"]
         optimizer = trainer.optimizer
-        # result['timesteps_total'] = result['timesteps_total'] * num_agents
-        result['episode_reward_mean'] = result['episode_reward_mean']/num_agents
+        #result['timesteps_total'] = result['timesteps_total'] * num_agents
+        result['timesteps_total'] = info['num_steps_trained']
+        result['episode_reward_mean'] = result['episode_reward_mean']/args.num_agents
         result['federated'] = "No federation"
         if result['training_iteration'] == 1:
-            uniform_initialize(trainer, num_agents)
-        elif result['training_iteration'] % num_iters == 0:
-            result['federated'] = f"Federation with {temperature}"
+            uniform_initialize(trainer, args) 
+        elif result['training_iteration'] % args.interval == 0:
+            result['federated'] = f"Federation with {args.temp}"
             # update weights
             #reward_weighted_update(agent, result, num_agents)
-            softmax_reward_weighted_update(trainer, result, num_agents, temperature, explore_dict={"lr": args.lr})
+            softmax_reward_weighted_update(trainer, result, args) 
             # clear buffer, don't want smoothing here
             optimizer.episode_history = []
     return fed_learn
