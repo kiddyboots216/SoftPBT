@@ -88,6 +88,7 @@ parser.add_argument("--resample_probability", type=float, default=0.25)
 parser.add_argument("--algo", type=str, default='PPO')
 parser.add_argument("--lr", type=list, 
     default=[1e-2, 5e-3, 1e-3, 5e-4, 1e-4, 5e-5, 1e-5, 5e-6])
+parser.add_argument("--gammas", type=list, default=[0.95, 0.955, 0.96, 0.965, 0.97, 0.975, 0.98, 0.985, 0.99, 0.995])
 parser.add_argument("--explore_params", type=list, default=["lr", "gamma"])
 args = parser.parse_args()
 #import pdb; pdb.set_trace()
@@ -179,7 +180,6 @@ elif args.env=="MountainCarContinuous-v0":
     parser.add_argument("--is_atari", type=bool, default=False)
     parser.add_argument("--dim", type=int, default=84)
     parser.add_argument("--max_steps", type=int, default=1e5)
-    parser.add_argument("--gammas", type=list, default=[0.95, 0.955, 0.96, 0.965, 0.97, 0.975, 0.98, 0.985, 0.99, 0.995])
 elif args.env=='Hopper-v2':
     parser.add_argument("--Lambda", type=float, default=1.0)
     parser.add_argument("--gamma", type=float, default=0.99)
