@@ -164,47 +164,35 @@ def explore(agent, policy_reward_mean, args):
     sorted_rewards = sorted(policy_reward_mean.items(), key=lambda kv: kv[1])
     upper_quantile = [kv[0] for kv in sorted_rewards[int(math.floor(args.quantile * -args.num_agents)):]]
     lower_quantile = [kv[0] for kv in sorted_rewards[:int(math.ceil(args.quantile * args.num_agents))]]
-    #print(lower_quantile)
     for agent_id in lower_quantile:
         policy_graph = agent.get_policy(agent_id)
-        # old_lr = policy_graph._sess.run(policy_graph.cur_lr)
         new_policy_graph = agent.get_policy(random.choice(upper_quantile))
-        if True:
-            # workaround because can't put dict into argparser
-        #if "lr" in args.explore_dict:
-            exemplar_lr = new_policy_graph.cur_lr
+        if "lr" in args.explore_params:
+            exemplar = new_policy_graph.cur_lr
             distribution = args.lr
-            if random.random() < args.resample_probability or \
-                    exemplar_lr not in distribution:
+            new_val = explore_helper(exemplar, distribution, args)
+            policy_graph.lr_schedule = ConstantSchedule(new_val)
+        if "gamma" in args.explore_params:
+            param = "gamma"
+            exemplar = new_policy_graph.config[param]
+            distribution = args.gammas
+            new_val = explore_helper(exemplar, distribution, args)
+            policy_graph.config[param] = new_val
+
+def explore_helper(exemplar, distribution, args):
+    if random.random() < args.resample_probability or \
+                    exemplar not in distribution:
                 new_val = random.choice(distribution)
-                # policy_graph.cur_lr.load(
-                #     new_val,
-                #     session=policy_graph._sess)
-                policy_graph.lr_schedule = ConstantSchedule(new_val)
-            elif random.random() > 0.5:
-                new_val = distribution[max(
-                    0,
-                    distribution.index(exemplar_lr) - 1)]
-                # policy_graph.cur_lr.load(
-                #     new_val,
-                #     session=policy_graph._sess)
-                policy_graph.lr_schedule = ConstantSchedule(new_val)
-            else:
-                new_val = distribution[min(
-                    len(distribution) - 1,
-                    distribution.index(exemplar_lr) + 1)]
-                # policy_graph.cur_lr.load(
-                #     new_val,
-                #     session=policy_graph._sess)
-                policy_graph.lr_schedule = ConstantSchedule(new_val)
-        # print(f"Changed lr from {old_lr} to {policy_graph._sess.run(policy_graph.cur_lr)} which is {new_val}")
-        # if "lr" in explore_dict:
-        #     if random.random() < resample_probability:
-        #         policy_graph.cur_lr = explore_dict["lr"]()
-        #     elif random.random() > 0.5:
-        #         policy_graph.cur_lr = new_policy_graph.cur_lr * 1.2
-        #     else:
-        #         policy_graph.cur_lr = new_policy_graph.cur_lr * 0.8
+    elif random.random() > 0.5:
+        new_val = distribution[max(
+            0,
+            distribution.index(exemplar) - 1)]
+    else:
+        new_val = distribution[min(
+            len(distribution) - 1,
+            distribution.index(exemplar) + 1)]
+    return new_val
+
 
 def fed_pbt_train(args):
     def fed_learn(metrics):
