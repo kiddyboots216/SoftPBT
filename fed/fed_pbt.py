@@ -85,6 +85,7 @@ parser.add_argument("--algo", type=str, default='PPO')
 parser.add_argument("--lr", type=list, 
     default=[1e-2, 5e-3, 1e-3, 5e-4, 1e-4, 5e-5, 1e-5, 5e-6])
 args = parser.parse_args()
+#import pdb; pdb.set_trace()
 if args.env=="BreakoutNoFrameskip-v4":
     parser.add_argument("--Lambda", type=float, default=0.95)
     parser.add_argument("--gamma", type=float, default=0.99)
@@ -209,7 +210,7 @@ elif args.env=="PongNoFrameskip-v4":
     parser.add_argument("--sample_batch_size", type=int, default=20)
     parser.add_argument("--train_batch_size", type=int, default=5000)
     parser.add_argument("--free_log_std", type=bool, default=False)
-    parser.add_argument("--use_gae", type=bool, default=False)
+    parser.add_argument("--use_gae", type=bool, default=True)
     parser.add_argument("--batch_mode", type=str, default="truncate_episodes")
     parser.add_argument("--vf_share_layers", type=bool, default=True)
     parser.add_argument("--observation_filter", type=str, default="NoFilter")

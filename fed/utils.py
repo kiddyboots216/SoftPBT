@@ -216,8 +216,8 @@ def fed_pbt_train(args):
         optimizer = trainer.optimizer
         #result['timesteps_total'] = result['timesteps_total'] * num_agents
         result['timesteps_total'] = info['num_steps_trained']
-        result['episode_reward_mean'] = np.mean(result['policy_reward_mean'].values()) if result['policy_reward_mean'] else np.nan
-        result['episode_reward_best'] = np.max(result['policy_reward_mean'].values()) if result['policy_reward_mean'] else np.nan
+        result['episode_reward_mean'] = np.mean(list(result['policy_reward_mean'].values())) if result['policy_reward_mean'] else np.nan
+        result['episode_reward_best'] = np.max(list(result['policy_reward_mean'].values())) if result['policy_reward_mean'] else np.nan
         result['federated'] = "No federation"
         if result['training_iteration'] == 1:
             uniform_initialize(trainer, args) 
