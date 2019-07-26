@@ -11,9 +11,7 @@ from ray.rllib.env.multi_agent_env import MultiAgentEnv
 from ray.rllib.env.atari_wrappers import is_atari, wrap_deepmind
 
 # PBT_QUANTILE = 0.25
-# import os
-# os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
-# os.environ["CUDA_VISIBLE_DEVICES"]="0,1,2,3"
+
 def make_multiagent(args):
     class MultiEnv(MultiAgentEnv):
         def __init__(self):

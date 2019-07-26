@@ -13,6 +13,10 @@ from ray.rllib.env.atari_wrappers import is_atari, wrap_deepmind
 
 from utils import gen_policy_graphs, make_fed_env, fed_train, fed_pbt_train
 
+import os
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
+os.environ["CUDA_VISIBLE_DEVICES"]="0,1,2,3,4,5,6,7"
+
 def fed_pbt_wrapper(args):
     ray.init(ignore_reinit_error=True)
     policy_graphs = gen_policy_graphs(args)
