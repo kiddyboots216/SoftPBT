@@ -88,8 +88,9 @@ parser.add_argument("--resample_probability", type=float, default=0.25)
 parser.add_argument("--algo", type=str, default='PPO')
 parser.add_argument("--lr", type=list, 
     default=[1e-2, 5e-3, 1e-3, 5e-4, 1e-4, 5e-5, 1e-5, 5e-6])
-parser.add_argument("--gammas", type=list, default=[0.95, 0.955, 0.96, 0.965, 0.97, 0.975, 0.98, 0.985, 0.99, 0.995])
-parser.add_argument("--explore_params", type=list, default=["lr", "gamma"])
+parser.add_argument("--gammas", type=list, default=[0.997, 0.995, 0.99, 0.98, 0.97, 0.95, 0.9, 0.85, 0.8])
+parser.add_argument("--entropy_coeffs", type=list, default=[0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01, 0.0])
+parser.add_argument("--explore_params", type=list, default=["lr", "gamma", "entropy_coeff"])
 args = parser.parse_args()
 #import pdb; pdb.set_trace()
 if args.env=="BreakoutNoFrameskip-v4":
