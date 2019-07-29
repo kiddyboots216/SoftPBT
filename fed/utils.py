@@ -178,6 +178,12 @@ def explore(agent, policy_reward_mean, args):
             distribution = args.gammas
             new_val = explore_helper(exemplar, distribution, args)
             policy_graph.config[param] = new_val
+        if "entropy_coeff" in args.explore_params:
+            param = "entropy_coeff"
+            exemplar = new_policy_graph.config[param]
+            distribution = args.entropy_coeffs
+            new_val = explore_helper(exemplar, distribution, args)
+            policy_graph.config[param] = new_val
 
 def explore_helper(exemplar, distribution, args):
     if random.random() < args.resample_probability or \
