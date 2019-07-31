@@ -219,7 +219,7 @@ def fed_pbt_train(args):
             #reward_weighted_update(agent, result, num_agents)
             softmax_reward_weighted_update(trainer, result, args) 
             # clear buffer, don't want smoothing here
-            optimizer.episode_history = []
+            # optimizer.episode_history = []
     return fed_learn
 
 def fed_train(args):
