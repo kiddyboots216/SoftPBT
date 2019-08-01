@@ -206,8 +206,9 @@ def fed_pbt_train(args):
         trainer = metrics["trainer"]
         info = result["info"]
         optimizer = trainer.optimizer
-        #result['timesteps_total'] = result['timesteps_total'] * num_agents
-        result['timesteps_total'] = info['num_steps_trained']
+        # TODO: Make the below more accurate to ground truth experiences collected
+        result['timesteps_total'] = result['timesteps_total'] * num_agents
+        #result['timesteps_total'] = info['num_steps_trained']
         result['episode_reward_mean'] = np.mean(list(result['policy_reward_mean'].values())) if result['policy_reward_mean'] else np.nan
         result['episode_reward_best'] = np.max(list(result['policy_reward_mean'].values())) if result['policy_reward_mean'] else np.nan
         result['federated'] = "No federation"

@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser(
     description='Run Grid Search')
 parser.add_argument("--env", type=str, 
     choices=['HalfCheetah-v2', 'Humanoid-v2', 'Hopper-v2',
-    "BreakoutNoFrameskip-v4", "PongNoFrameskip-v4", 
+    "BreakoutNoFrameskip-v4", "PongNoFrameskip-v4", "QbertNoFrameskip-v4", "BeamRiderNoFrameskip-v4", 
     "MountainCarContinuous-v0"], default="MountainCarContinuous-v0")
 parser.add_argument("--tune", type=bool, default=True)
 parser.add_argument("--pbt", type=bool, default=False)
@@ -32,7 +32,7 @@ parser.add_argument("--entropy_coeff", type=list, default=[0.01, 0.0])
 parser.add_argument("--explore_params", type=list, default=["lr", "gamma"])
 args = parser.parse_args()
 #import pdb; pdb.set_trace()
-if args.env=="BreakoutNoFrameskip-v4":
+if args.env=="BreakoutNoFrameskip-v4" or args.env=="QbertNoFrameskip-v4" or args.env=="BeamRiderNoFrameskip-v4":
     parser.add_argument("--Lambda", type=float, default=0.95)
     parser.add_argument("--kl_coeff", type=float, default=0.5)
     parser.add_argument("--clip_rewards", type=bool, default=True)
