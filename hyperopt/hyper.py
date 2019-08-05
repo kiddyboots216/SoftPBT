@@ -12,19 +12,18 @@ from ray.tune.suggest.hyperopt import HyperOptSearch
 if __name__ == "__main__":
     import argparse
     from hyperopt import hp
-    ray.init()
     space = {
         "lr": hp.choice("lr", [1e-4, 1e-3, 1e-2]),
         "gamma": hp.choice("gamma", [0.9, 0.95, 0.99, 0.995]),
         "entropy_coeff": hp.choice("activation", [0, 0.001, 0.01])
     }
-    current_best_params = {
+    current_best_params = [ 
         {
-            "lr": 1e-3,
-            "gamma": 0.99,
-            "entropy_coeff": 0.001,
+            "lr": 1,
+            "gamma": 2,
+            "entropy_coeff": 1,
         }
-    }
+    ] 
     config = {
         "num_samples": 1000,
         "config": {
@@ -45,9 +44,9 @@ if __name__ == "__main__":
             "num_gpus": 1,
             "env": "BreakoutNoFrameskip-v4",
             # TODO: Are these necessary?
-            "lr": 1e-3,
-            "gamma": 0.99,
-            "entropy_coeff": 0.001,
+            #"lr": 1e-3,
+            #"gamma": 0.99,
+            #"entropy_coeff": 0.001,
         },
         "stop": {
             "timesteps_total": 100000000,
@@ -58,7 +57,7 @@ if __name__ == "__main__":
         max_concurrent=4,
         metric="episode_reward_mean",
         mode="max",
-        points_to_evaluate=current_best_params
+        #points_to_evaluate=current_best_params
     )
     scheduler = AsyncHyperBandScheduler(metric="episode_reward_mean", mode="max")
     ray.init()
