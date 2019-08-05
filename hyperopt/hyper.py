@@ -15,7 +15,7 @@ if __name__ == "__main__":
     space = {
         "lr": hp.choice("lr", [1e-4, 1e-3, 1e-2]),
         "gamma": hp.choice("gamma", [0.9, 0.95, 0.99, 0.995]),
-        "entropy_coeff": hp.choice("activation", [0, 0.001, 0.01])
+        "entropy_coeff": hp.choice("entropy_coeff", [0, 0.001, 0.01])
     }
     current_best_params = [ 
         {
@@ -54,10 +54,10 @@ if __name__ == "__main__":
     }
     algo = HyperOptSearch(
         space,
-        max_concurrent=4,
+        max_concurrent=8,
         metric="episode_reward_mean",
         mode="max",
-        #points_to_evaluate=current_best_params
+        points_to_evaluate=current_best_params
     )
     scheduler = AsyncHyperBandScheduler(metric="episode_reward_mean", mode="max")
     ray.init()
