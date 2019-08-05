@@ -11,7 +11,7 @@ from ray import tune
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
 from ray.rllib.env.atari_wrappers import is_atari, wrap_deepmind
 
-from utils import gen_policy_graphs, make_fed_env, fed_train, fed_pbt_train
+from utils import gen_policy_graphs, make_fed_env, fed_pbt_train
 
 import os
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
@@ -26,8 +26,9 @@ def fed_pbt_wrapper(args):
         args.algo,
         name=f"{args.env}-{args.algo}-{args.num_agents}-{args.temp}-{args.interval}",
         stop={"timesteps_total": args.max_steps},
+        resume=True,
         config={
-                "output": "/tmp/fed-out", "output_max_file_size": 5000000,
+                "output": "fed-out", "output_max_file_size": 5000000,
                 "multiagent": {
                     "policy_graphs": policy_graphs,
                     "policy_mapping_fn": tune.function(lambda agent_id: f'agent_{agent_id}'),
@@ -67,7 +68,7 @@ def fed_pbt_wrapper(args):
         #     "gpu": args.gpus,
         #     "cpu": args.cpus,
         # }
-        checkpoint_at_end=True
+        #checkpoint_at_end=True
     )
 
 parser = argparse.ArgumentParser(
@@ -83,7 +84,7 @@ parser.add_argument("--num_workers", type=int, default=1)
 parser.add_argument("--gpus", type=int, default=0)
 # parser.add_argument("--cpus", type=int, default=1)
 parser.add_argument("--num_agents", type=int, default=1)
-parser.add_argument("--interval", type=int, default=4)
+parser.add_argument("--interval", type=int, default=8)
 parser.add_argument("--temp", type=float, default=1.5)
 parser.add_argument("--temp_decay", type=float, default=0.0)
 parser.add_argument("--quantile", type=float, default=0.25)
@@ -97,7 +98,7 @@ parser.add_argument("--entropy_coeffs", type=list, default=[0.001, 0.01, 0])
 # parser.add_argument("--entropy_coeffs", type=list, default=[0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01, 0.0])
 parser.add_argument("--explore_params", type=list, default=["lr", "gamma", "entropy_coeff"])
 args = parser.parse_args()
-args['beta'] = args['temp']
+parser.add_argument("--beta", type=float, default=args.temp)
 #import pdb; pdb.set_trace()
 if args.env=="BreakoutNoFrameskip-v4" or args.env=="QbertNoFrameskip-v4" or args.env=="BeamRiderNoFrameskip-v4":
     parser.add_argument("--Lambda", type=float, default=0.95)
@@ -110,7 +111,7 @@ if args.env=="BreakoutNoFrameskip-v4" or args.env=="QbertNoFrameskip-v4" or args
     parser.add_argument("--entropy_coeff", type=float, default=0.01)
     parser.add_argument("--num_sgd_iter", type=int, default=10)
     parser.add_argument("--sgd_minibatch_size", type=int, default=500)
-    parser.add_argument("--sample_batch_size", type=int, default=22)
+    parser.add_argument("--sample_batch_size", type=int, default=100)
     parser.add_argument("--train_batch_size", type=int, default=5000)
     parser.add_argument("--free_log_std", type=bool, default=False)
     parser.add_argument("--use_gae", type=bool, default=True)
