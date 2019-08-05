@@ -2,15 +2,13 @@ import gym
 import math
 import random
 import numpy as np
-#from easydict import EasyDict
 
 import ray
 from ray.tune.registry import register_env
 from ray import tune
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
 from ray.rllib.env.atari_wrappers import is_atari, wrap_deepmind
-
-# PBT_QUANTILE = 0.25
+from ray.rllib.utils.schedules import ConstantSchedule
 
 def make_multiagent(args):
     class MultiEnv(MultiAgentEnv):
@@ -160,7 +158,6 @@ def explore(agent, policy_reward_mean, args):
     """
     Helper function to explore hyperparams (currently just lr)
     """
-    from ray.rllib.utils.schedules import ConstantSchedule
     sorted_rewards = sorted(policy_reward_mean.items(), key=lambda kv: kv[1])
     upper_quantile = [kv[0] for kv in sorted_rewards[int(math.floor(args.quantile * -args.num_agents)):]]
     lower_quantile = [kv[0] for kv in sorted_rewards[:int(math.ceil(args.quantile * args.num_agents))]]
@@ -207,8 +204,8 @@ def fed_pbt_train(args):
         info = result["info"]
         optimizer = trainer.optimizer
         # TODO: Make the below more accurate to ground truth experiences collected
-        result['timesteps_total'] = result['timesteps_total'] * num_agents
-        #result['timesteps_total'] = info['num_steps_trained']
+        # result['timesteps_total'] = result['timesteps_total'] * num_agents
+        result['timesteps_total'] = info['num_steps_trained']
         result['episode_reward_mean'] = np.mean(list(result['policy_reward_mean'].values())) if result['policy_reward_mean'] else np.nan
         result['episode_reward_best'] = np.max(list(result['policy_reward_mean'].values())) if result['policy_reward_mean'] else np.nan
         result['federated'] = "No federation"
@@ -218,205 +215,8 @@ def fed_pbt_train(args):
             result['federated'] = f"Federation with {args.temp}"
             # update weights
             #reward_weighted_update(agent, result, num_agents)
-            softmax_reward_weighted_update(trainer, result, args) 
+            softmax_reward_weighted_update(trainer, result, args)
+            args['temp'] = args['beta'] * 1.0/(1.0 + args['temp_decay'] * result['training_iteration'])
             # clear buffer, don't want smoothing here
             # optimizer.episode_history = []
     return fed_learn
-
-def fed_train(args):
-    num_agents = args.num_agents
-    if args.tune:
-        temp_schedule = args.temp_schedule
-        init_temp = temp_schedule[0]
-        init_temp_1, init_temp_2, init_temp_3, init_temp_4 = init_temp
-        hotter_temp = temp_schedule[1]
-        hotter_temp_1, hotter_temp_2, hotter_temp_3, hotter_temp_4 = hotter_temp
-        temp_shift = temp_schedule[2]
-        fed_schedule = args.fed_schedule
-        init_iters = fed_schedule[0]
-        init_iters_1, init_iters_2, init_iters_3, init_iters_4 = init_iters
-        increased_iters = fed_schedule[1]
-        increased_iters_1, increased_iters_2, increased_iters_3, increased_iters_4 = increased_iters
-        fed_shift = fed_schedule[2]
-        def fed_learn_1(info):
-            return
-    #       get stuff out of info
-            result = info["result"]
-            agent = info["trainer"]
-            optimizer = agent.optimizer
-            num_iters = init_iters_1
-            temperature = init_temp_1
-            result['timesteps_total'] = result['timesteps_total'] * num_agents
-            # potentially scale up
-            if result['timesteps_total'] > fed_shift:
-                num_iters = increased_iters_1
-            if result['timesteps_total'] > temp_shift:
-                temperature = hotter_temp_1
-            # correct result reporting
-            result['episode_reward_mean'] = result['episode_reward_mean']/num_agents
-            result['episode_reward_max'] = result['episode_reward_max']/num_agents
-            result['episode_reward_min'] = result['episode_reward_min']/num_agents
-            result['federated'] = "No federation"
-            if result['training_iteration'] == 1:
-                uniform_initialize(agent, num_agents)
-            elif result['training_iteration'] % num_iters == 0:
-                result['federated'] = f"Federation with {temperature}"
-                # update weights
-                #reward_weighted_update(agent, result, num_agents)
-                softmax_reward_weighted_update(agent, result, num_agents, temperature, explore_dict={"lr": args.lr})
-                # clear buffer, don't want smoothing here
-                optimizer.episode_history = []
-        def fed_learn_2(info):
-    #       get stuff out of info
-            result = info["result"]
-            agent = info["trainer"]
-            optimizer = agent.optimizer
-            num_iters = init_iters_2
-            temperature = init_temp_2
-            result['timesteps_total'] = result['timesteps_total'] * num_agents
-            # potentially scale up
-            if result['timesteps_total'] > fed_shift:
-                num_iters = increased_iters_2
-            if result['timesteps_total'] > temp_shift:
-                temperature = hotter_temp_2
-            # correct result reporting
-            result['episode_reward_mean'] = result['episode_reward_mean']/num_agents
-            result['episode_reward_max'] = result['episode_reward_max']/num_agents
-            result['episode_reward_min'] = result['episode_reward_min']/num_agents
-            result['federated'] = "No federation"
-            if result['training_iteration'] == 1:
-                uniform_initialize(agent, num_agents)
-            elif result['training_iteration'] % num_iters == 0:
-                result['federated'] = f"Federation with {temperature}"
-                # update weights
-                #reward_weighted_update(agent, result, num_agents)
-                softmax_reward_weighted_update(agent, result, num_agents, temperature, explore_dict={"lr": args.lr})
-                # clear buffer, don't want smoothing here
-                optimizer.episode_history = []
-        def fed_learn_3(info):
-    #       get stuff out of info
-            result = info["result"]
-            agent = info["trainer"]
-            optimizer = agent.optimizer
-            num_iters = init_iters_3
-            temperature = init_temp_3
-            result['timesteps_total'] = result['timesteps_total'] * num_agents
-            # potentially scale up
-            if result['timesteps_total'] > fed_shift:
-                num_iters = increased_iters_3
-            if result['timesteps_total'] > temp_shift:
-                temperature = hotter_temp_3
-            # correct result reporting
-            result['episode_reward_mean'] = result['episode_reward_mean']/num_agents
-            result['episode_reward_max'] = result['episode_reward_max']/num_agents
-            result['episode_reward_min'] = result['episode_reward_min']/num_agents
-            result['federated'] = "No federation"
-            if result['training_iteration'] == 1:
-                uniform_initialize(agent, num_agents)
-            elif result['training_iteration'] % num_iters == 0:
-                result['federated'] = f"Federation with {temperature}"
-                # update weights
-                #reward_weighted_update(agent, result, num_agents)
-                softmax_reward_weighted_update(agent, result, num_agents, temperature, explore_dict={"lr": args.lr})
-                # clear buffer, don't want smoothing here
-                optimizer.episode_history = []
-        def fed_learn_4(info):
-    #       get stuff out of info
-            result = info["result"]
-            agent = info["trainer"]
-            optimizer = agent.optimizer
-            num_iters = init_iters_4
-            temperature = init_temp_4
-            result['timesteps_total'] = result['timesteps_total'] * num_agents
-            # potentially scale up
-            if result['timesteps_total'] > fed_shift:
-                num_iters = increased_iters_4
-            if result['timesteps_total'] > temp_shift:
-                temperature = hotter_temp_4
-            # correct result reporting
-            result['episode_reward_mean'] = result['episode_reward_mean']/num_agents
-            result['episode_reward_max'] = result['episode_reward_max']/num_agents
-            result['episode_reward_min'] = result['episode_reward_min']/num_agents
-            result['federated'] = "No federation"
-            if result['training_iteration'] == 1:
-                uniform_initialize(agent, num_agents)
-            elif result['training_iteration'] % num_iters == 0:
-                result['federated'] = f"Federation with {temperature}"
-                # update weights
-                #reward_weighted_update(agent, result, num_agents)
-                softmax_reward_weighted_update(agent, result, num_agents, temperature, explore_dict={"lr": args.lr})
-                # clear buffer, don't want smoothing here
-                optimizer.episode_history = []
-        return fed_learn_1, fed_learn_2, fed_learn_3, fed_learn_4
-    elif args.pbt:
-        iters = args.num_iters
-        num_iters_1, num_iters_2, num_iters_3, num_iters_4 = iters
-        def pbt_1(info):
-            result = info["result"]
-            agent = info["trainer"]
-            optimizer = agent.optimizer
-            result['timesteps_total'] = result['timesteps_total'] * num_agents
-            result['episode_reward_mean'] = result['episode_reward_mean']/num_agents
-            result['episode_reward_max'] = result['episode_reward_max']/num_agents
-            result['episode_reward_min'] = result['episode_reward_min']/num_agents
-            if result['training_iteration'] % num_iters_1 == 0:
-                population_based_train(agent, result, num_agents)
-                optimizer.episode_history = []
-        def pbt_2(info):
-            result = info["result"]
-            agent = info["trainer"]
-            optimizer = agent.optimizer
-            result['timesteps_total'] = result['timesteps_total'] * num_agents
-            result['episode_reward_mean'] = result['episode_reward_mean']/num_agents
-            result['episode_reward_max'] = result['episode_reward_max']/num_agents
-            result['episode_reward_min'] = result['episode_reward_min']/num_agents
-            if result['training_iteration'] % num_iters_2 == 0:
-                population_based_train(agent, result, num_agents)
-                optimizer.episode_history = []
-        def pbt_3(info):
-            result = info["result"]
-            agent = info["trainer"]
-            optimizer = agent.optimizer
-            result['timesteps_total'] = result['timesteps_total'] * num_agents
-            result['episode_reward_mean'] = result['episode_reward_mean']/num_agents
-            result['episode_reward_max'] = result['episode_reward_max']/num_agents
-            result['episode_reward_min'] = result['episode_reward_min']/num_agents
-            if result['training_iteration'] % num_iters_3 == 0:
-                population_based_train(agent, result, num_agents)
-                optimizer.episode_history = []
-        def pbt_4(info):
-            result = info["result"]
-            agent = info["trainer"]
-            optimizer = agent.optimizer
-            result['timesteps_total'] = result['timesteps_total'] * num_agents
-            result['episode_reward_mean'] = result['episode_reward_mean']/num_agents
-            result['episode_reward_max'] = result['episode_reward_max']/num_agents
-            result['episode_reward_min'] = result['episode_reward_min']/num_agents
-            if result['training_iteration'] % num_iters_4 == 0:
-                population_based_train(agent, result, num_agents)
-                optimizer.episode_history = []
-        return pbt_1, pbt_2, pbt_3, pbt_4
-    else:
-        temperature = args.temperature
-        num_iters = args.num_iters
-        def fed_learn(info):
-    #       get stuff out of info
-            result = info["result"]
-            agent = info["trainer"]
-            optimizer = agent.optimizer
-            result['timesteps_total'] = result['timesteps_total'] * num_agents
-            # correct result reporting
-            result['episode_reward_mean'] = result['episode_reward_mean']/num_agents
-            result['episode_reward_max'] = result['episode_reward_max']/num_agents
-            result['episode_reward_min'] = result['episode_reward_min']/num_agents
-            result['federated'] = "No federation"
-            if result['training_iteration'] == 1:
-                uniform_initialize(agent, num_agents)
-            elif result['training_iteration'] % num_iters == 0:
-                result['federated'] = f"Federation with {temperature}"
-                # update weights
-                reward_weighted_update(agent, result, num_agents)
-                # softmax_reward_weighted_update(agent, result, num_agents, temperature)
-                # clear buffer, don't want smoothing here
-                optimizer.episode_history = []
-        return fed_learn

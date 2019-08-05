@@ -27,6 +27,7 @@ def fed_pbt_wrapper(args):
         name=f"{args.env}-{args.algo}-{args.num_agents}-{args.temp}-{args.interval}",
         stop={"timesteps_total": args.max_steps},
         config={
+                "output": "/tmp/fed-out", "output_max_file_size": 5000000,
                 "multiagent": {
                     "policy_graphs": policy_graphs,
                     "policy_mapping_fn": tune.function(lambda agent_id: f'agent_{agent_id}'),
@@ -51,7 +52,7 @@ def fed_pbt_wrapper(args):
                 "sgd_minibatch_size": args.sgd_minibatch_size,
                 "sample_batch_size": args.sample_batch_size,
                 # divide batch between agents, because we'll replicate it later
-                "train_batch_size": args.train_batch_size/args.num_agents,
+                "train_batch_size": args.train_batch_size/args.num_agents if args.divide_batches else args.train_batch_size,
                 "model": {
                     "free_log_std": args.free_log_std,
                     "dim": args.dim,
@@ -77,21 +78,26 @@ parser.add_argument("--env", type=str,
     "MountainCarContinuous-v0"], default="MountainCarContinuous-v0")
 parser.add_argument("--tune", type=bool, default=True)
 parser.add_argument("--pbt", type=bool, default=False)
+parser.add_argument("--divide_batches", type=bool, default=True)
 parser.add_argument("--num_workers", type=int, default=1)
 parser.add_argument("--gpus", type=int, default=0)
 # parser.add_argument("--cpus", type=int, default=1)
 parser.add_argument("--num_agents", type=int, default=1)
 parser.add_argument("--interval", type=int, default=4)
 parser.add_argument("--temp", type=float, default=1.5)
+parser.add_argument("--temp_decay", type=float, default=0.0)
 parser.add_argument("--quantile", type=float, default=0.25)
 parser.add_argument("--resample_probability", type=float, default=0.25)
 parser.add_argument("--algo", type=str, default='PPO')
-parser.add_argument("--lr", type=list, 
-    default=[1e-2, 5e-3, 1e-3, 5e-4, 1e-4, 5e-5, 1e-5, 5e-6])
-parser.add_argument("--gammas", type=list, default=[0.997, 0.995, 0.99, 0.98, 0.97, 0.95, 0.9, 0.85, 0.8])
-parser.add_argument("--entropy_coeffs", type=list, default=[0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01, 0.0])
+parser.add_argument("--lr", type=list, default=[1e-2, 1e-3, 1e-4])
+parser.add_argument("--gammas", type=list, default=[0.995, 0.99, 0.95, 0.9])
+parser.add_argument("--entropy_coeffs", type=list, default=[0.001, 0.001, 0])
+# parser.add_argument("--lr", type=list, default=[1e-2, 5e-3, 1e-3, 5e-4, 1e-4, 5e-5, 1e-5, 5e-6])
+# parser.add_argument("--gammas", type=list, default=[0.997, 0.995, 0.99, 0.98, 0.97, 0.95, 0.9, 0.85, 0.8])
+# parser.add_argument("--entropy_coeffs", type=list, default=[0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01, 0.0])
 parser.add_argument("--explore_params", type=list, default=["lr", "gamma", "entropy_coeff"])
 args = parser.parse_args()
+args['beta'] = args['temp']
 #import pdb; pdb.set_trace()
 if args.env=="BreakoutNoFrameskip-v4" or args.env=="QbertNoFrameskip-v4" or args.env=="BeamRiderNoFrameskip-v4":
     parser.add_argument("--Lambda", type=float, default=0.95)
