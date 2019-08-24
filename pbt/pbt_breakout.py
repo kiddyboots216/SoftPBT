@@ -37,9 +37,9 @@ if __name__ == "__main__":
             # "lambda": lambda: random.uniform(0.9, 1.0),
             # "clip_param": lambda: random.uniform(0.01, 0.5),
             # "lr": [1e-3, 5e-5, 1e-4, 5e-4],
+            "entropy_coeff": [0, 0.001, 0.01],
             "lr": [1e-2, 5e-3, 1e-3, 5e-4, 1e-4, 5e-5, 1e-5, 5e-6],
             "gamma": [0.997,0.995,0.99,0.98,0.97,0.95,0.9,0.85,0.8],
-            "entropy_coeff": [0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01, 0.0],
             # "num_sgd_iter": lambda: random.randint(1, 30),
             # "sgd_minibatch_size": lambda: random.randint(128, 16384),
             # "train_batch_size": lambda: random.randint(2000, 160000),
@@ -52,7 +52,7 @@ if __name__ == "__main__":
         name="pbt_breakout",
         scheduler=pbt,
         **{
-            "num_samples": 8,
+            "num_samples": 5,
             "config": {
                 "lambda": 0.95, #0.5 to 0.99
                 "kl_coeff": 0.5,
@@ -65,7 +65,7 @@ if __name__ == "__main__":
                 "sample_batch_size": 100,
                 "sgd_minibatch_size": 500,
                 "num_sgd_iter": 10,
-                "num_workers": 5,
+                "num_workers": 8,
                 "num_envs_per_worker": 5,
                 "batch_mode": "truncate_episodes",
                 "observation_filter": "NoFilter",

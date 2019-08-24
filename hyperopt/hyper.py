@@ -10,17 +10,18 @@ from ray.tune.schedulers import AsyncHyperBandScheduler
 from ray.tune.suggest.hyperopt import HyperOptSearch
 
 if __name__ == "__main__":
+    ray.init(num_gpus=7, redis_password="hyperopt") 
     import argparse
     from hyperopt import hp
     space = {
-        "lr": hp.choice("lr", [1e-4, 1e-3, 1e-2]),
-        "gamma": hp.choice("gamma", [0.9, 0.95, 0.99, 0.995]),
+        "lr": hp.choice("lr", [1e-2, 5e-3, 1e-3, 5e-4, 1e-4, 5e-5, 1e-5, 5e-6]),
+        "gamma": hp.choice("gamma", [0.997, 0.995, 0.99, 0.98, 0.97, 0.95, 0.9, 0.85, 0.8]),
         "entropy_coeff": hp.choice("entropy_coeff", [0, 0.001, 0.01])
     }
     current_best_params = [ 
         {
-            "lr": 1,
-            "gamma": 2,
+            "lr": 4,
+            "gamma": 4,
             "entropy_coeff": 1,
         }
     ] 
@@ -41,7 +42,7 @@ if __name__ == "__main__":
             "batch_mode": "truncate_episodes",
             "observation_filter": "NoFilter",
             "vf_share_layers": True,
-            "num_gpus": 1,
+            "num_gpus": 0.875,
             "env": "BreakoutNoFrameskip-v4",
             # TODO: Are these necessary?
             #"lr": 1e-3,
@@ -49,7 +50,7 @@ if __name__ == "__main__":
             #"entropy_coeff": 0.001,
         },
         "stop": {
-            "timesteps_total": 100000000,
+            "timesteps_total": 20000000,
         },
     }
     algo = HyperOptSearch(
@@ -57,14 +58,13 @@ if __name__ == "__main__":
         max_concurrent=8,
         metric="episode_reward_mean",
         mode="max",
-        points_to_evaluate=current_best_params
+        #points_to_evaluate=current_best_params
     )
     scheduler = AsyncHyperBandScheduler(metric="episode_reward_mean", mode="max")
-    ray.init()
     run(
         "PPO",
-        name="hyperopt_breakout",
+        name="hyperopt_breakout_trial_2",
         search_alg=algo,
-        scheduler=scheduler,
+        #scheduler=scheduler,
         **config
     )

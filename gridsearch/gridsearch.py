@@ -153,27 +153,31 @@ elif args.env=="PongNoFrameskip-v4":
     parser.add_argument("--dim", type=int, default=42)
     parser.add_argument("--max_steps", type=int, default=3e6)
 args = parser.parse_args()
-
+ray.init(redis_password="gridsearch")
 run(
     "PPO",
-    stop={"timesteps_total": args.max_steps},
+    stop={"timesteps_total": 100000000},
     config={
             "num_workers": args.num_workers,
             "num_gpus": args.gpus,
             "env": args.env,
             # can't access args.lambda, it's a syntax error
             "lambda": args.Lambda,
-            "gamma": grid_search(args.gamma),
+            #"gamma": grid_search(args.gamma),
+            "gamma": 0.95,
             "kl_coeff": args.kl_coeff,
             "clip_rewards": args.clip_rewards,
             "clip_param": args.clip_param,
             "vf_clip_param": args.vf_clip_param,
             "vf_loss_coeff": args.vf_loss_coeff,
-            "entropy_coeff": grid_search(args.entropy_coeff),
+            #"entropy_coeff": grid_search(args.entropy_coeff),
+            "entropy_coeff": 0,
             "num_sgd_iter": args.num_sgd_iter,
             "sgd_minibatch_size": args.sgd_minibatch_size,
             "sample_batch_size": args.sample_batch_size,
-            "lr": grid_search(args.lr),
+            #"lr": grid_search(args.lr),
+            "lr": 0.0001,
+            "num_envs_per_worker": 5,
             # divide batch between agents, because we'll replicate it later
             "train_batch_size": args.train_batch_size,
             "model": {

@@ -216,7 +216,7 @@ def fed_pbt_train(args):
             # update weights
             #reward_weighted_update(agent, result, num_agents)
             softmax_reward_weighted_update(trainer, result, args)
-            args['temp'] = args['beta'] * 1.0/(1.0 + args['temp_decay'] * result['training_iteration'])
+            args.temp = args.beta * 1.0/(1.0 + args.temp_decay * result['training_iteration'])
             # clear buffer, don't want smoothing here
             # optimizer.episode_history = []
     return fed_learn
