@@ -153,10 +153,10 @@ elif args.env=="PongNoFrameskip-v4":
     parser.add_argument("--dim", type=int, default=42)
     parser.add_argument("--max_steps", type=int, default=3e6)
 args = parser.parse_args()
-ray.init(redis_password="gridsearch")
+ray.init(redis_password='gridsearch')
 run(
     "PPO",
-    stop={"timesteps_total": 100000000},
+    #stop={"timesteps_total": 500000000},
     config={
             "num_workers": args.num_workers,
             "num_gpus": args.gpus,
