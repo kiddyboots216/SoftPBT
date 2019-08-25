@@ -10,7 +10,7 @@ from ray.tune.schedulers import AsyncHyperBandScheduler
 from ray.tune.suggest.hyperopt import HyperOptSearch
 
 if __name__ == "__main__":
-    ray.init(num_gpus=7, redis_password="hyperopt") 
+    ray.init(num_gpus=7, redis_password="hyperopt")
     import argparse
     from hyperopt import hp
     space = {
