@@ -17,19 +17,19 @@ parser.add_argument("--env", type=str,
 parser.add_argument("--tune", type=bool, default=True)
 parser.add_argument("--pbt", type=bool, default=False)
 parser.add_argument("--num_workers", type=int, default=1)
-parser.add_argument("--gpus", type=int, default=0.4)
+parser.add_argument("--gpus", type=float, default=0.4)
 # parser.add_argument("--cpus", type=int, default=1)
 parser.add_argument("--num_agents", type=int, default=1)
 parser.add_argument("--interval", type=int, default=4)
 parser.add_argument("--temp", type=float, default=1.5)
 parser.add_argument("--quantile", type=float, default=0.25)
 parser.add_argument("--resample_probability", type=float, default=0.25)
-parser.add_argument("--algo", type=str, default='PPO')
 parser.add_argument("--lr", type=list, 
-    default=[1e-2, 1e-4, 5e-6])
-parser.add_argument("--gamma", type=list, default=[0.997, 0.97, 0.8])
-parser.add_argument("--entropy_coeff", type=list, default=[0.01, 0.0])
-parser.add_argument("--explore_params", type=list, default=["lr", "gamma"])
+default=[1e-2, 5e-3, 1e-3, 5e-4, 1e-4, 5e-5, 1e-5, 5e-6])
+parser.add_argument("--gamma", type=list, 
+	default=[0.997, 0.995, 0.99, 0.98, 0.97, 0.95, 0.9, 0.85, 0.8])
+parser.add_argument("--entropy_coeff", type=list, default=[0.0, 0.01, 0.001])
+parser.add_argument("--explore_params", type=list, default=["lr", "gamma", "entropy_coeff"])
 args = parser.parse_args()
 #import pdb; pdb.set_trace()
 if args.env=="BreakoutNoFrameskip-v4" or args.env=="QbertNoFrameskip-v4" or args.env=="BeamRiderNoFrameskip-v4":
@@ -156,7 +156,7 @@ args = parser.parse_args()
 ray.init(redis_password='gridsearch')
 run(
     "PPO",
-    #stop={"timesteps_total": 500000000},
+    stop={"timesteps_total": 50000000},
     config={
             "num_workers": args.num_workers,
             "num_gpus": args.gpus,
@@ -164,14 +164,14 @@ run(
             # can't access args.lambda, it's a syntax error
             "lambda": args.Lambda,
             #"gamma": grid_search(args.gamma),
-            "gamma": 0.95,
+            "gamma": 0.997,
             "kl_coeff": args.kl_coeff,
             "clip_rewards": args.clip_rewards,
             "clip_param": args.clip_param,
             "vf_clip_param": args.vf_clip_param,
             "vf_loss_coeff": args.vf_loss_coeff,
             #"entropy_coeff": grid_search(args.entropy_coeff),
-            "entropy_coeff": 0,
+            "entropy_coeff": grid_search([0.0, 0.01]),
             "num_sgd_iter": args.num_sgd_iter,
             "sgd_minibatch_size": args.sgd_minibatch_size,
             "sample_batch_size": args.sample_batch_size,
